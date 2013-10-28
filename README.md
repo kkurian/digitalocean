@@ -37,5 +37,5 @@ Features:
 
 Credits:
 
-This module was inspired by, and includes remnants of, a Gist
+This module was inspired by, and includes parts of, a Gist
 by Brad Conte (https://gist.github.com/B-Con/6431500). Thank you!
