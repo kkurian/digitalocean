@@ -3,6 +3,7 @@ DigitalOcean for Python3
 
 This is a general wrapper around the DigitalOcean API.
 
+
 Example Usage:
 
     > api = DigitalOceanAPI(
@@ -26,9 +27,15 @@ Example Usage:
         'region_id': 4})
     < {'status': 'OK', 'droplet': {'size_id': 66, ...}}
 
+
 Features:
-    - Lazily creates a single SSL connection used for all requests.
-    - Can be used as the expression in a 'with' statement.
-    - Closes the SSL connection upon deletion of the instance or, when
-      used as an expression in a 'with' statement, upon exiting the 'with'
-      statement
+
+- lazily creates a single SSL connection used for all requests
+- can be used as the expression in a 'with' statement
+- automatically retries/reconnects
+
+
+Credits:
+
+This module was inspired by, and includes remnants of, a Gist
+by Brad Conte (https://gist.github.com/B-Con/6431500). Thank you!
