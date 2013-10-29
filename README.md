@@ -14,7 +14,7 @@ Example Usage:
     > api.request('droplets')
     < {'status': 'OK', 'droplets': [{...}, ...]}
 
-    > api.request('droplets', {'ids': [4242]})
+    > api.request('droplets', ids=[4242])
     < {'status': 'OK', 'droplet': {...}}
 
     > api.request('images')
