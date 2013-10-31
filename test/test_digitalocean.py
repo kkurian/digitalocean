@@ -1,9 +1,16 @@
 import pytest
 
+import sys
+python_major_version = sys.version_info[0]
 
 @pytest.fixture
 def api():
-    import digitalocean
+    if python_major_version == 2:
+        sys.path.append('..')
+        import digitalocean
+    else:
+        assert python_major_version == 3
+        from .. import digitalocean
     return digitalocean.DigitalOceanAPI('client_id', 'api_key', False)
 
 

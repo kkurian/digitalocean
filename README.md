@@ -1,7 +1,8 @@
-DigitalOcean for Python3
-========================
+DigitalOcean for Python 2 and 3
+===============================
 
-This is a general wrapper around the DigitalOcean API.
+This is a general wrapper around the DigitalOcean API. It works at least in
+Python 2.7 and 3.3.
 
 
 Example Usage:
@@ -37,5 +38,5 @@ Features:
 
 Credits:
 
-This module was inspired by, and includes parts of, a Gist
-by Brad Conte (https://gist.github.com/B-Con/6431500). Thank you!
+This module was originally inspired by a Gist by Brad Conte
+(https://gist.github.com/B-Con/6431500).

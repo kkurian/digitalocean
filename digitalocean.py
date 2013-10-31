@@ -1,12 +1,12 @@
-"""A Python3 wrapper for the DigitalOcean API."""
+"""A Python wrapper for the DigitalOcean API."""
 
-import ssl
+import sys
+python_major_version = sys.version_info[0]
+
 import json
-from http.client import BadStatusLine
-from http.client import HTTPConnection
-from http.client import HTTPSConnection
-from http.client import CannotSendRequest
 from itertools import chain, cycle, islice
+
+import requests
 
 
 class OperatorError(Exception): pass
@@ -15,10 +15,6 @@ class OperatorError(Exception): pass
 class APIException(Exception):
     """
     This is thrown when an DigitalOcean API request returns an error.
-
-    Attributes:
-        api_msg - the error message returned by the API
-        api_call - the API call that generated the error
     """
     def __init__(self, resource_path, api_msg):
         self.resource_path = resource_path
@@ -36,7 +32,7 @@ class DigitalOceanAPI(object):
     This is a general wrapper around the DigitalOcean API.
 
     See README.md for example usage.
-    
+
     TODO:
         - Improve error reporting: Misuse of the request() command, such as by
           passing the wrong number of ids for a given api endpoint, results in
@@ -84,8 +80,10 @@ class DigitalOceanAPI(object):
         self._debug = debug
 
     def __enter__(self):
-        self._ensure_connection()
         return self
+
+    def __exit__(self):
+        pass
 
     def request(self, api_endpoint, params={}, ids=[]):
         """
@@ -140,26 +138,22 @@ class DigitalOceanAPI(object):
                 order they appear in the endpoint.
 
         """
-        self._ensure_connection()
-
         resource_path = self._make_resource_path(api_endpoint, params, ids)
 
         try:
-            self.connection.request("GET", resource_path)
-        except (TimeoutError, CannotSendRequest) as e:
+            response = requests.get("https://{}/{}".format(
+                DigitalOceanAPI.api_host, resource_path))
+        except requests.exceptions.RequestException as e:
             return self._retry_or_raise(api_endpoint, params, ids, e)
 
-        try:
-            response = self.connection.getresponse()
-        except BadStatusLine as e:
-            return self._retry_or_raise(api_endpoint, params, ids, e)
+        if response.status_code != 200:
+            raise APIException(resource_path, 'status code: {}'.format(
+                response.status_code))
 
         self._retries_count = 0
 
-        response_data = response.read().decode("utf-8")
-
         try:
-            response_json = json.loads(response_data)
+            response_json = response.json()
         except ValueError:
             raise APIException(
                 self._make_resource_path(
@@ -174,35 +168,6 @@ class DigitalOceanAPI(object):
 
         return response_json
 
-    def connect(self):
-        ssl_ctx = ssl.SSLContext(ssl.PROTOCOL_TLSv1)
-        if self.check_cert:
-            ssl_ctx.verify_mode = ssl.CERT_REQUIRED
-            ssl_ctx.load_verify_locations(self.pemfile, self.capath)
-        else:
-            ssl_cts.verify_mode = ssl.CERT_NONE
-
-        self.connection = HTTPSConnection(
-            DigitalOceanAPI.api_host, context=ssl_ctx)
-
-        if self._debug:
-            self.connection.set_debuglevel(1)
-
-    def close(self):
-        if not self.connection is None:
-            self.connection.close()
-            self.connection = None
-        self.auth_data = ""
-
-    def _ensure_connection(self):
-        if not self.connection:
-            self.connect()
-
-    def __exit__(self, exc_type, exc_value, traceback):
-        self.close()
-
-    def __del__(self):
-        self.close()
 
     def _make_resource_path(
         self, api_endpoint, params={}, ids=[], redact_credentials=False
@@ -238,7 +203,12 @@ class DigitalOceanAPI(object):
         # Based upon a recipe credited to George Sakkis.
         # Source: http://docs.python.org/3.3/library/itertools.html
         pending = len(iterables)
-        nexts = cycle(iter(it).__next__ for it in iterables)
+
+        if python_major_version == 3:
+            nexts = cycle(iter(it).__next__ for it in iterables)
+        else:
+            nexts = cycle(iter(it).next for it in iterables)
+
         while pending:
             try:
                 for next in nexts:
@@ -248,7 +218,6 @@ class DigitalOceanAPI(object):
                 nexts = cycle(islice(nexts, pending))
 
     def _retry_or_raise(self, api_endpoint, params, ids, exception):
-        self.close()
         if self._retries_count < self.maximum_retries:
             self._retries_count += 1
             return self.request(api_endpoint, params, ids)
@@ -265,4 +234,3 @@ class DigitalOceanAPI(object):
                     str(exception)
                 ]
             ))
-
