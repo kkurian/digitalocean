@@ -29,13 +29,6 @@ Example Usage:
     < {'status': 'OK', 'droplet': {'size_id': 66, ...}}
 
 
-Features:
-
-- lazily creates a single SSL connection used for all requests
-- can be used as the expression in a 'with' statement
-- automatically retries/reconnects
-
-
 Credits:
 
 This module was originally inspired by a Gist by Brad Conte
