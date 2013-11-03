@@ -13,9 +13,8 @@ class OperatorError(Exception): pass
 
 
 class APIException(Exception):
-    """
-    This is thrown when an DigitalOcean API request returns an error.
-    """
+    """This is thrown when an DigitalOcean API request returns an error."""
+
     def __init__(self, resource_path, api_msg):
         self.resource_path = resource_path
         self.api_msg = api_msg
@@ -28,8 +27,7 @@ class APIException(Exception):
 
 
 class DigitalOceanAPI(object):
-    """
-    This is a general wrapper around the DigitalOcean API.
+    """This is a general wrapper around the DigitalOcean API.
 
     See README.md for example usage.
 
@@ -37,6 +35,7 @@ class DigitalOceanAPI(object):
         - Improve error reporting: Misuse of the request() command, such as by
           passing the wrong number of ids for a given api endpoint, results in
           an APIException (good!) that can be hard to decipher (bad!).
+
     """
 
     api_host = "api.digitalocean.com"
@@ -51,7 +50,8 @@ class DigitalOceanAPI(object):
         maximum_retries=2,
         debug=False
     ):
-        """
+        """Create a DigitalOceanAPI instance.
+
         Keyword Arguments:
             check_cert - whether the HTTPS connection's cert should be verified
             pemfile - path to PEM file, such as "/etc/ssl/certs/ca-certificates.pem"
@@ -62,6 +62,7 @@ class DigitalOceanAPI(object):
             pemfile or a capath. If it is not obvious which values to provide,
             see http://mercurial.selenic.com/wiki/CACertificates for a related
             explanation and platform-specific hints.
+
         """
 
         assert client_id
@@ -86,9 +87,9 @@ class DigitalOceanAPI(object):
         pass
 
     def request(self, api_endpoint, params={}, ids=[]):
-        """
-        Perform an API request and returns the parsed JSON data. Throws
-        an exception with API description if the response is an error.
+        """Perform an API request and returns the parsed JSON data.
+
+        Throws an exception with API description if the response is an error.
 
         Arguments:
             api_endpoint -
@@ -138,6 +139,7 @@ class DigitalOceanAPI(object):
                 order they appear in the endpoint.
 
         """
+
         resource_path = self._make_resource_path(api_endpoint, params, ids)
 
         try:
