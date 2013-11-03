@@ -9,9 +9,6 @@ from itertools import chain, cycle, islice
 import requests
 
 
-class OperatorError(Exception): pass
-
-
 class APIException(Exception):
     """This is thrown when an DigitalOcean API request returns an error."""
 
