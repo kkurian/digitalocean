@@ -143,7 +143,7 @@ class DigitalOceanAPI(object):
         resource_path = self._make_resource_path(api_endpoint, params, ids)
 
         try:
-            response = requests.get("https://{}/{}".format(
+            response = requests.get("https://{}{}".format(
                 DigitalOceanAPI.api_host, resource_path))
         except requests.exceptions.RequestException as e:
             return self._retry_or_raise(api_endpoint, params, ids, e)
