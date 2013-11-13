@@ -3,24 +3,29 @@
 import sys
 python_major_version = sys.version_info[0]
 
+import re
 import json
+import logging
 from itertools import chain, cycle, islice
 
 import requests
 
 
-class APIException(Exception):
-    """This is thrown when an DigitalOcean API request returns an error."""
+### Redact client_id and api_key from logged URLs.
+class ClientAndKeyRedactor(logging.Formatter):
+    def format(self, record):
+        message = super(ClientAndKeyRedactor, self).format(record)
+        return re.sub(
+            r'(client_id|api_key)=[^\s\&]*', r'\1=[REDACTED]', message)
 
-    def __init__(self, resource_path, api_msg):
-        self.resource_path = resource_path
-        self.api_msg = api_msg
+handler = logging.StreamHandler()
+handler.setFormatter(
+    ClientAndKeyRedactor('%(asctime)s %(levelname)s %(message)s'))
 
-    def __str__ (self):
-        msg = 'While getting https://{}{}, DigitalOcean reported an error' + \
-            ':\n\t"{}"'
-        return msg.format(
-            DigitalOceanAPI.api_host, self.resource_path, self.api_msg)
+logger = logging.getLogger('requests')
+logger.addHandler(handler)
+logger.propagate = False
+###
 
 
 class DigitalOceanAPI(object):
@@ -34,6 +39,20 @@ class DigitalOceanAPI(object):
           an APIException (good!) that can be hard to decipher (bad!).
 
     """
+
+    class APIException(Exception):
+        """The DigitalOcean API returned an error."""
+
+        def __init__(self, resource_path, api_msg):
+            self.resource_path = resource_path
+            self.api_msg = api_msg
+
+        def __str__ (self):
+            msg = 'While getting https://{}{}, DigitalOcean reported an ' + \
+                'error:\n\t"{}"'
+            return msg.format(
+                DigitalOceanAPI.api_host, self.resource_path, self.api_msg)
+
 
     api_host = "api.digitalocean.com"
 
@@ -146,21 +165,21 @@ class DigitalOceanAPI(object):
             return self._retry_or_raise(api_endpoint, params, ids, e)
 
         if response.status_code != 200:
-            raise APIException(resource_path, 'status code: {}'.format(
-                response.status_code))
+            raise DigitalOceanAPI.APIException(
+                resource_path, 'status code: {}'.format(response.status_code))
 
         self._retries_count = 0
 
         try:
             response_json = response.json()
         except ValueError:
-            raise APIException(
+            raise DigitalOceanAPI.APIException(
                 self._make_resource_path(
                     api_endpoint, params, ids, redact_credentials=True),
                 response_data)
 
         if response_json["status"] != "OK":
-            raise APIException(
+            raise DigitalOceanAPI.APIException(
                 self._make_resource_path(
                     api_endpoint, params, ids, redact_credentials=True),
                 response_json["message"])
@@ -178,8 +197,6 @@ class DigitalOceanAPI(object):
         except KeyError:
             path += api_endpoint
 
-        # TODO: We should have a separate redact_credentials() method that
-        # can be applied to any paths instead of this conditional.
         credentials = {
             'client_id': self.client_id,
             'api_key': self.api_key
