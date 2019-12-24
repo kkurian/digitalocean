@@ -1,3 +1,5 @@
+**Note: not maintained**
+
 DigitalOcean for Python 2 and 3
 ===============================
 
